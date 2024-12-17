@@ -3,7 +3,9 @@ const fs = require('fs');
 const express = require('express');
 const pool = require('./db');
 const verificarToken = require('./middlewares/auth');
-
+const HOST = process.env.HOST || 'localhost'; // Lê o HOST ou usa 'localhost' por padrão
+const PORT = process.env.PORT || 3000;       // Porta HTTPS
+const HTTP_PORT = process.env.HTTP_PORT || 8080; // Porta HTTP
 // importar rotas
 const loginRoutes = require('./routes/loginRoutes'); // Caminho para o arquivo de rotas
 const docxRoutes = require('./routes/docx'); // Caminho para o arquivo de rotas
@@ -35,7 +37,6 @@ const options = {
 };
 
 // Inicia o servidor HTTPS
-const PORT = process.env.PORT || 3000;
 https.createServer(options, app).listen(PORT, () => {
     console.log(`Servidor rodando em HTTPS na porta ${PORT}`);
 });
@@ -43,9 +44,8 @@ https.createServer(options, app).listen(PORT, () => {
 const http = require('http');
 
 // Redireciona HTTP para HTTPS
-const HTTP_PORT = 8080; // Porta para redirecionamento HTTP
 http.createServer((req, res) => {
-    const host = req.headers.host.replace(/:\d+$/, `:${PORT}`); // Ajusta a porta para HTTPS
+    const host = `${HOST}:${PORT}`; // Usa a variável de ambiente HOST e PORT
     res.writeHead(301, { Location: `https://${host}${req.url}` });
     res.end();
 }).listen(HTTP_PORT, () => {
