@@ -1,0 +1,4 @@
+node_modules
+.env
+word-api.exe
+server.exe
