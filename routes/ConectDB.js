@@ -28,17 +28,5 @@ router.get('/', async (req, res) => {
     }
 });
 
-// router.get('/db', async (req, res) => {
-//     const query = 'SELECT * FROM sua_tabela LIMIT 10'; // Substitua pelo nome real da tabela
-//     try {
-//         const [rows] = await pool.query(query); // Executa a consulta
-//         console.error('Sucesso ao acessar o banco de dados!', err);
-//         res.json(rows); // Retorna os resultados como JSON
-//     } catch (err) {
-//         console.error('Erro ao acessar o banco de dados:', err);
-//         res.status(500).json({ error: 'Erro ao acessar o banco de dados' });
-//     }
-// });
-
 // Exporta o roteador e a função de teste
 module.exports = router;

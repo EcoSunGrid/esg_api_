@@ -5,7 +5,7 @@ const pool = require('./db');
 const verificarToken = require('./middlewares/auth');
 const HOST = process.env.HOST || 'localhost'; // Lê o HOST ou usa 'localhost' por padrão
 const PORT = process.env.PORT || 3000;       // Porta HTTPS
-const HTTP_PORT = process.env.HTTP_PORT || 8080; // Porta HTTP
+const HTTP_PORT = process.env.HTTP_PORT || 443; // Porta HTTP
 // importar rotas
 const loginRoutes = require('./routes/loginRoutes'); // Caminho para o arquivo de rotas
 const docxRoutes = require('./routes/docx'); // Caminho para o arquivo de rotas
@@ -15,6 +15,7 @@ const dbRouter = require('./routes/ConectDB');
 const uploadRoutes = require('./routes/uploadRoutes'); // Importa as rotas de upload
 // Lógica de inserção e utilização de documentos editáveis
 const formatedDocument = require('./routes/formatedDocument'); // Importa as rotas de formatedDocument
+const s3FileHandler = require('./routes/s3FileHandler'); // Importa as rotas de s3FileHandler
 const updateDocx = require('./routes/updateDocx'); // Importa as rotas de updateDocx
 
 const app = express();
@@ -22,19 +23,26 @@ require('dotenv').config();
 app.use(express.json());
 
 app.use((req, res, next) => {
-    const rotasPublicas = ['/login', '/signup']; // Liste aqui as rotas que não precisam de autenticação
-    if (rotasPublicas.includes(req.path)) {
+    const rotasPublicas = ['/login', '/signup', '/arquivos/visualizar']; // Liste as rotas públicas sem parâmetros
+
+    // Verifica se a rota pública é um prefixo da rota atual
+    const isRotaPublica = rotasPublicas.some((rota) => req.path.startsWith(rota));
+
+    if (isRotaPublica) {
         return next(); // Ignora verificação de token para rotas públicas
     }
+
     // Aplica a verificação de token para rotas protegidas
     verificarToken(req, res, next);
 });
 
 // Lê os certificados
 const options = {
-    key: fs.readFileSync('key.pem'),
-    cert: fs.readFileSync('cert.pem')
-};
+    key: fs.readFileSync('/etc/ssl/private/privkey.pem'),
+    cert: fs.readFileSync('/etc/ssl/certs/fullchain.pem'),
+    // key: fs.readFileSync('key.pem'),
+    // cert: fs.readFileSync('cert.pem')
+};  
 
 // Inicia o servidor HTTPS
 https.createServer(options, app).listen(PORT, () => {
@@ -51,6 +59,7 @@ http.createServer((req, res) => {
 }).listen(HTTP_PORT, () => {
     console.log(`Redirecionamento HTTP ativo na porta ${HTTP_PORT}`);
 });
+console.log("Vamos para as rotas");
 
 //-----------------------Rotas----------------------------
 // Rota de Login
@@ -63,6 +72,7 @@ app.use('/db', dbRouter);
 // Usa as rotas de upload
 app.use('/', uploadRoutes);
 app.use('/upload', formatedDocument);
+app.use('/arquivos/visualizar', s3FileHandler);
 app.use('/docx', updateDocx);
 //---------------------------------------------------------
 

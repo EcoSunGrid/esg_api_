@@ -1,5 +1,5 @@
 const express = require('express');
-const multer = require('multer');
+const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 const { S3Client, ListObjectsV2Command } = require('@aws-sdk/client-s3');
@@ -33,7 +33,12 @@ router.post('/upload', upload.single('file'), async (req, res) => {
         }
 
         // Nome único para o arquivo
-        const uniqueFilename = `${Date.now()}-${req.file.originalname}`;
+        const dataNOW = Date.now();
+        const uniqueFilename = `${Date.now(dataNOW)}-${req.file.originalname}`;
+        // Função para gerar o código criptografado com base no Date.now()
+        const secret = process.env.CRYPTO_SECRET || 'chave-secreta'; // Defina uma chave secreta no .env
+        const timestamp = Date.now().toString(); // Gera um timestamp único
+        const chaveArquivo = crypto.createHmac('sha256', secret).update(timestamp).digest('hex');
 
         // Função para remover o arquivo local após o upload
         const removeLocalFile = (filePath) => {
@@ -50,14 +55,15 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 
         // Salva as informações do arquivo no banco de dados
         const query = `
-            INSERT INTO arquivos (nome_original, nome_s3, url, tipo, data_upload)
-            VALUES (?, ?, ?, ?, NOW())
+            INSERT INTO arquivos (nome_original, nome_s3, url, tipo, codigo_criptografado, data_upload)
+            VALUES (?, ?, ?, ?, ?,NOW())
         `;
         const values = [
             req.file.originalname, // Nome original do arquivo
             uniqueFilename,        // Nome gerado no S3
             s3Url,                 // URL do arquivo no S3
             req.file.mimetype,     // Tipo do arquivo
+            chaveArquivo           // chave Criptografada para o streaming do arquivo
         ];
 
         await pool.query(query, values);

@@ -8,7 +8,7 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 
 # 4. Instala as dependências (incluindo dotenv)
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # 5. Copia todos os arquivos da aplicação para o container
 COPY . .

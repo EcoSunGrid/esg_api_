@@ -3,12 +3,16 @@ version: '3.8'
 services:
   app:
     build: .
+    image: word-api-app # Nome da imagem válido
     container_name: word-api
     ports:
       - "3000:3000"
-      - "8080:8080"
-    volumes:
+      - "443:443"
+    vvolumes:
       - .:/usr/src/app
+      - /usr/src/app/node_modules
+      - /home/ubuntu/certs/fullchain.pem:/etc/ssl/certs/fullchain.pem:ro
+      - /home/ubuntu/certs/privkey.pem:/etc/ssl/private/privkey.pem:ro
     env_file:
       - .env # Carrega automaticamente as variáveis do .env
     depends_on:
